@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"image/color"
+	"time"
 
 	"github.com/bauersimon/go-zsa"
 )
@@ -27,13 +28,28 @@ func main() {
 
 	fmt.Println("successful connection")
 
-	if err := client.SetRGBAll(context.Background(), color.RGBA{
-		R: 255,
-		G: 0,
-		B: 0,
-	}); err != nil {
-		panic(err)
-	}
+	wait := 1000 * time.Millisecond
 
-	fmt.Println("keyboard should be white now")
+	for {
+		if err := client.SetRGBAll(context.Background(), color.RGBA{
+			R: 255,
+			G: 255,
+			B: 255,
+		}); err != nil {
+			panic(err)
+		}
+
+		time.Sleep(wait)
+
+		if err := client.SetRGBAll(context.Background(), color.RGBA{
+			R: 255,
+			G: 0,
+			B: 0,
+		}); err != nil {
+			panic(err)
+		}
+
+		time.Sleep(wait)
+
+	}
 }
