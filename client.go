@@ -125,15 +125,23 @@ func (c *Client) UnsetLayer(ctx context.Context, layer int32) error {
 }
 
 // SetRGBLed sets the color of a specific LED on the keyboard.
-func (c *Client) SetRGBLed(ctx context.Context, led int32, color color.Color) error {
+// Each additional specified LED tirggers a separate API request. To change all LEDs at once, use "SetRGBAll".
+func (c *Client) SetRGBLed(ctx context.Context, color color.Color, leds ...int32) error {
 	r, g, b, _ := color.RGBA()
-	return wrapSuccessToError(ctx, c.client.SetRGBLed, &api.SetRGBLedRequest{
-		Led:     led,
-		Red:     int32(r),
-		Green:   int32(g),
-		Blue:    int32(b),
-		Sustain: 0, // Unclear what the sustain is for now (https://github.com/zsa/kontroll/issues/9).
-	})
+	var errs []error
+	for _, led := range leds {
+		if err := wrapSuccessToError(ctx, c.client.SetRGBLed, &api.SetRGBLedRequest{
+			Led:     led,
+			Red:     int32(r),
+			Green:   int32(g),
+			Blue:    int32(b),
+			Sustain: 0, // Unclear what the sustain is for now (https://github.com/zsa/kontroll/issues/9).
+		}); err != nil {
+			errs = append(errs, err)
+		}
+	}
+
+	return errors.Join(errs...)
 }
 
 // SetRGBAll sets the color of all LEDs on the keyboard.
